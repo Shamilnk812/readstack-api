@@ -91,3 +91,22 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         return validate_custom_username(value, self.context['request'].user)
 
 
+
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True)
+    confirm_password  = serializers.CharField(write_only=True)
+
+    def validate_current_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("The current password you entered is incorrect. Please try again.")
+        return value
+    
+    def validate_new_password(self, value):
+        return validate_password_strength(value)
+    
+    def validate(self, data):
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError("New password and confirm password do not match.")
+        return data
