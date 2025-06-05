@@ -171,3 +171,28 @@ def custom_validate_description(description):
     
     # add more like if contunues __ any special characters
     return description
+
+
+
+# -------------------------- Reading List Validation ---------------------
+
+def validate_reading_list_name(name):
+    value = name.strip()
+
+    # Length check
+    if len(value) < 3 :
+        raise ValidationError("Reading list name must be at least 3 charaters long")
+    if len(value) > 50 :
+        raise serializers.ValidationError("Name must be between 3 and 50 characters.")
+
+    # Format check ( only letters, numbers, spaces, hyphens, and underscores allowed)
+    if not re.match(r'^[\w\s-]+$', value):
+        raise ValidationError("Name can only contain letters, numbers, spaces, hyphens, and underscores.")
+    
+    # Prevent presence of HTML or script tags 
+    stripped = strip_tags(value)
+    if stripped != value:
+        raise ValidationError("Readin list name contains HTML or script tags, which are not allowed.")
+    
+    return value
+

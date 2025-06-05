@@ -50,4 +50,27 @@ class BookListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Book
         fields = ['id', 'title', 'authors', 'genre', 'publication_date', 'description', 'book_file', 'upload_date']
-    
+
+
+
+#----------------------  Reading List Serializers --------------------
+
+class ReadingListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReadingList
+        fields = ['id', 'name', 'created_at', 'is_deleted']
+        read_only_fields = ['id', 'created_at'] 
+          
+
+    def validate_name(self, value):
+        value = validate_reading_list_name(value)
+        request = self.context.get('request')
+
+        if request and request.user:
+            if ReadingList.objects.filter(user=request.user, name__iexact=value.strip(), is_deleted=False).exists():
+                raise serializers.ValidationError("You already have a reading list with this name.")
+
+        return value
+
+
+

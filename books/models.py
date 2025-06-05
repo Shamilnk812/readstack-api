@@ -20,3 +20,28 @@ class Book(models.Model):
     def __str__(self):
         return self.title
     
+
+
+class ReadingList(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reading_lists')
+    name = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_deleted = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.name} - {self.user.username}"
+    
+    
+
+
+class ReadingListItem(models.Model):
+    reading_list = models.ForeignKey(ReadingList, on_delete=models.CASCADE, related_name='items')
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    order = models.PositiveIntegerField()
+
+    class Meta:
+        unique_together = ('reading_list', 'book')
+        ordering = ['order']
+
+    def __str__(self):
+        return f"{self.book.title} in {self.reading_list.name} (Order {self.order})"    
