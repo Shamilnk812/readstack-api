@@ -9,9 +9,29 @@ from rest_framework.views import APIView
 from .utils import *
 from .serializers import *
 
-#--------------- User Registration ---------------
+#----------------- User Registration -----------------
 
 class UserRegistrationView(APIView):
+    """
+    Handles user registration.
+
+    This view allows new users to register by providing a unique username, a valid email address,
+    a password, and a confirm password field. It validates the input data using the 
+    UserRegistrationSerializer, creates the user if the data is valid, and returns a success message
+    along with the registered user's email and username. If the validation fails, it returns 
+    appropriate error details. Any unexpected errors are caught and a generic error response is returned.
+
+    Expected Input:
+    - username: str (required, unique)
+    - email: str (required, unique, valid email format)
+    - password: str (required)
+    - confirm_password: str (must match password)
+
+    Returns:
+    - 201 Created: On successful registration
+    - 400 Bad Request: If validation fails
+    - 500 Internal Server Error: For unexpected errors
+    """
     permission_classes = [AllowAny]
     
     def post(self, request):
@@ -45,6 +65,23 @@ class UserRegistrationView(APIView):
 
 
 class UserLoginView(APIView):
+    """
+    Handles user login.
+
+    This view authenticates users by verifying the provided email and password. It first validates
+    the input fields and email format, then checks whether a user with the given email exists.
+    If authentication is successful, it returns JWT access and refresh tokens along with the user's
+    email and username. If any step fails, an appropriate error message is returned.
+
+    Expected Input:
+    - email: str (required, must be in valid format)
+    - password: str (required)
+
+    Returns:
+    - 200 OK: On successful authentication, along with access and refresh tokens
+    - 400 Bad Request: If required fields are missing or email format is invalid
+    - 401 Unauthorized: If user does not exist or credentials are invalid
+    """
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -101,6 +138,21 @@ class UserLoginView(APIView):
 
 
 class UserLogoutView(APIView):
+    """
+    Handles user logout.
+
+    This view logs out an authenticated user by blacklisting their refresh token, effectively 
+    invalidating it. The user must provide a valid refresh token in the request body. If the 
+    token is valid, it is blacklisted and a success message is returned. If the token is 
+    invalid, expired, or missing, an appropriate error message is returned.
+
+    Expected Input:
+    - refresh: str (required, valid refresh token)
+
+    Returns:
+    - 200 OK: On successful logout and token blacklisting
+    - 400 Bad Request: If the refresh token is missing, invalid, or expired
+    """
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -129,7 +181,24 @@ class UserLogoutView(APIView):
 
 
 
+#-------------------------- Update user details --------------------
+
 class UpdateUserDetailsView(APIView):
+    """
+    Handles updating user details.
+
+    This view allows authenticated users to update their account information, specifically their
+    username and email address. It uses the `UserUpdateSerializer` to validate and update the data.
+    The view ensures that the new username and email are valid and unique, excluding the current user.
+
+    Expected Input:
+    - email: str (required, must be a valid and unique email)
+    - username: str (required, must be unique)
+
+    Returns:
+    - 200 OK: On successful update with the updated user data
+    - 400 Bad Request: If validation fails or input data is invalid
+    """
     permission_classes = [IsAuthenticated]
 
     def put(self, request):
@@ -151,7 +220,27 @@ class UpdateUserDetailsView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+
+#----------------------- Change user password -----------------------
+
 class ChangePasswordView(APIView):
+    """
+    Handles password change for authenticated users.
+
+    This view allows a logged-in user to change their password by providing the current password,
+    a new password, and a confirmation of the new password. It ensures that the current password
+    is correct, the new password meets strength requirements, and that the new and confirm
+    passwords match. On success, the user's password is updated.
+
+    Expected Input:
+    - current_password: str (required, must match the user's existing password)
+    - new_password: str (required, must meet strength criteria)
+    - confirm_password: str (required, must match new_password)
+
+    Returns:
+    - 200 OK: If the password is successfully changed
+    - 400 Bad Request: If validation fails (e.g., incorrect current password, mismatched new passwords, weak password)
+    """
     permission_classes = [IsAuthenticated]
 
     def put(self, request):
