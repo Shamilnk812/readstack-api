@@ -134,7 +134,6 @@ class UpdateUserDetailsView(APIView):
 
     def put(self, request):
         user = request.user
-        print('user ssss',request.user)
         serializer = UserUpdateSerializer(user, data=request.data, context={'request': request})  
 
         if serializer.is_valid():

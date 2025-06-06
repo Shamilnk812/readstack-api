@@ -100,6 +100,9 @@ def custom_validate_authors(authors):
 
 
 def custom_validate_genre(genre_name):
+    print('geeenre name',genre_name)
+    if not genre_name.strip():
+        raise ValidationError("Genre field cannot be empty. Please enter a valid genre name")
     allowed_genres = [choice[0] for choice in GENRE_CHOICES]
     normalized_value = genre_name.strip().lower()
     

@@ -34,7 +34,7 @@ class BookCreateUpdateSerializer(serializers.ModelSerializer):
     def validate_genre(self, value):
         return custom_validate_genre(value)
     
-    def validate_book_file(value):
+    def validate_book_file(self,value):
         return custom_validate_pdf_file(value)
 
     def validate_publication_date(self, value):
@@ -47,9 +47,18 @@ class BookCreateUpdateSerializer(serializers.ModelSerializer):
 
 
 class BookListSerializer(serializers.ModelSerializer):
+    uploaded_by = serializers.SerializerMethodField()
+
     class Meta:
         model = Book
-        fields = ['id', 'title', 'authors', 'genre', 'publication_date', 'description', 'book_file', 'upload_date']
+        fields = ['id', 'title', 'authors', 'genre', 'publication_date', 'description', 'book_file', 'upload_date', 'uploaded_by']
+    
+    def get_uploaded_by(self, obj):
+        return {
+            "id": obj.uploaded_by.id,
+            "username": obj.uploaded_by.username,
+            "email": obj.uploaded_by.email
+        }
 
 
 
@@ -58,7 +67,7 @@ class BookListSerializer(serializers.ModelSerializer):
 class ReadingListSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReadingList
-        fields = ['id', 'name', 'created_at', 'is_deleted']
+        fields = ['id', 'name', 'created_at']
         read_only_fields = ['id', 'created_at'] 
           
 
@@ -73,4 +82,18 @@ class ReadingListSerializer(serializers.ModelSerializer):
         return value
 
 
+
+
+class BookDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Book
+        fields = ['id', 'title', 'authors', 'genre', 'publication_date', 'description', 'book_file', 'upload_date']
+
+
+class ReadingListItemSerializer(serializers.ModelSerializer):
+    book = BookDetailSerializer(read_only=True)
+
+    class Meta:
+        model = ReadingListItem
+        fields = ['id', 'order', 'book']
 
