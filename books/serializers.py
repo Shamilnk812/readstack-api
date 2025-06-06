@@ -25,8 +25,6 @@ class BookCreateUpdateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("You already have a book with this title.")
 
         return value    
-
-
     
     def validate_authors(self, value):
         return custom_validate_authors(value)
@@ -70,7 +68,6 @@ class ReadingListSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'created_at']
         read_only_fields = ['id', 'created_at'] 
           
-
     def validate_name(self, value):
         value = validate_reading_list_name(value)
         request = self.context.get('request')
@@ -80,8 +77,6 @@ class ReadingListSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("You already have a reading list with this name.")
 
         return value
-
-
 
 
 class BookDetailSerializer(serializers.ModelSerializer):
