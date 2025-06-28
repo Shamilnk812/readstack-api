@@ -80,6 +80,9 @@ class LoginSerializer(serializers.Serializer):
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(required=False)
+    username = serializers.CharField(required=False)
+
     class Meta:
         model = User
         fields = ['email', 'username']

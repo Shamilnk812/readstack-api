@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny,IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
 from django.utils import timezone
 from .serializers import *
 
@@ -70,13 +71,15 @@ class UpdateBookView(APIView):
     - book_file: file (required, must be a valid PDF file)
 
     Returns:
-    - 200 OK: If the book is successfully updated
+    - 200 OK: If the book is successfully updated or if not data provided
     - 400 Bad Request: If validation fails
     - 404 Not Found: If the book does not exist or does not belong to the user
     """
     permission_classes = [IsAuthenticated]
 
     def put(self, request, id):
+        data = request.data
+
         try:
             book = Book.objects.get(id=id, uploaded_by=request.user)
         except Book.DoesNotExist:
@@ -85,8 +88,14 @@ class UpdateBookView(APIView):
                 "message": "Book not found or you do not have permission to update it."
             }, status=status.HTTP_404_NOT_FOUND)
         
-        serializer = BookCreateUpdateSerializer(book, data=request.data, context={'request': request})
-
+        # Check if no data provided 
+        if not any(field in data for field in ['id', 'title', 'authors', 'genre', 'publication_date', 'description', 'book_file', 'uploaded_by']):
+            return Response({
+                "status": "info",
+                "message": "No data provided to update."
+            }, status=status.HTTP_200_OK)
+        
+        serializer = BookCreateUpdateSerializer(book, data=data, context={'request': request}, partial=True)
         if serializer.is_valid():
             serializer.save(uploaded_by=request.user)
             return Response({
@@ -229,13 +238,14 @@ class BookListView(APIView):
 
     def get(self, request):
         books = Book.objects.filter(is_deleted=False, is_uploaded=True).order_by('-created_at')
-        serializer = BookListSerializer(books, many=True)
-        return Response({
-            "status": "success",
-            "message": "Books fetched successfully.",
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
 
+        paginator = PageNumberPagination()
+        paginator.page_size = 12
+        paginated_qs = paginator.paginate_queryset(books, request)
+
+        serializer = BookListSerializer(paginated_qs, many=True)
+        return paginator.get_paginated_response(serializer.data)
+       
 
 
 
@@ -334,12 +344,12 @@ class GetReadingListView(APIView):
                 "message": "You don't have any reading lists. Please create one.",
             }, status=status.HTTP_200_OK)
         
-        serializer = ReadingListSerializer(reading_lists, many=True)
-        return Response({
-            "status": "success",
-            "message": "Reading lists fetched successfully.",
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
+        paginator = PageNumberPagination()
+        paginator.page_size = 8
+        paginated_qs = paginator.paginate_queryset(reading_lists, request)
+        serializer = ReadingListSerializer(paginated_qs, many=True)
+        return paginator.get_paginated_response(serializer.data)
+       
         
 
 

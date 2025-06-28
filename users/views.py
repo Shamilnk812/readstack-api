@@ -192,19 +192,44 @@ class UpdateUserDetailsView(APIView):
     The view ensures that the new username and email are valid and unique, excluding the current user.
 
     Expected Input:
-    - email: str (required, must be a valid and unique email)
-    - username: str (required, must be unique)
+    - email: str (optional, must be a valid and unique email)
+    - username: str (optional, must be unique)
 
     Returns:
     - 200 OK: On successful update with the updated user data
+    - 200 OK: If no changes are detected or no data is provided, with an informational message
     - 400 Bad Request: If validation fails or input data is invalid
     """
     permission_classes = [IsAuthenticated]
 
     def put(self, request):
         user = request.user
-        serializer = UserUpdateSerializer(user, data=request.data, context={'request': request})  
+        data = request.data
 
+        # Check if no data provided 
+        if not any(field in data for field in ['email', 'username']):
+            return Response({
+                "status": "info",
+                "message": "No data provided to update."
+            }, status=status.HTTP_200_OK)
+        
+        # Check if any values are actually different
+        has_changes = False
+        for field in ['email', 'username']:
+            if field in data:
+                new_value = data[field].strip()
+                old_value = getattr(user, field)
+                if new_value != old_value:
+                    has_changes = True
+                    break
+        
+        if not has_changes:
+            return Response({
+                "status": "info",
+                "message": "No changes detected. Profile already up to date."
+            }, status=status.HTTP_200_OK)
+        
+        serializer = UserUpdateSerializer(user, data=data, context={'request': request})  
         if serializer.is_valid():
             serializer.save()
             return Response({
